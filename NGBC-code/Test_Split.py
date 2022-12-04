@@ -40,7 +40,7 @@ def through(lujing, key_word):
 
 if __name__ == '__main__':
 
-    pathList = through(r".\dataset", ".csv")
+    pathList = through(r".\syndataset", ".csv")
 
     # 跑某些范围
     pathList=pathList[0:len(pathList)]
