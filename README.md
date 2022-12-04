@@ -4,3 +4,6 @@ We use the natural neighbor structure to construct coarse-grained granular-balls
 These program mainly containing:
   - a  synthetic dataset folder named "syndataset".
   - a  real dataset folder named "dataset".
+  - a python file named “Test_Split.py” is the main function file.
+  - other python files
+# 
