@@ -88,4 +88,3 @@ if __name__ == '__main__':
 
         print("ACC", acc(true_label, merge_label))
         print("NMI", metrics.normalized_mutual_info_score(true_label, merge_label))
-        print("ARI", metrics.adjusted_rand_score(true_label, merge_label))

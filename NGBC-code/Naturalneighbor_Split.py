@@ -101,14 +101,14 @@ class NNSearch:
         radiusAray = np.array(radiusList)
         radiusMean = radiusAray.mean()
         radiusStd = np.std(radiusAray)
-        radius = radiusMean + radiusStd
+        betaradius = radiusMean + radiusStd
 
         while True:
 
         #######################################################
             nb_group_len = len(nbGroup)
             for i in range(len(radiusList)):
-                if radiusList[i] > radius:
+                if radiusList[i] > betaradius:
                     # 更新group字典
                     (originBall, newBall) = splitNB(nbGroup[i])
                     nbGroup[i] = originBall
@@ -123,8 +123,8 @@ class NNSearch:
             radiusList = [0] * len(refinedBall)
             for i, nb in enumerate(refinedBall):
                 radiusList[i] = get_radius(nb)
-            # 判断所有球是否小于半径两倍
-            radiusJudge = [i <= radius for i in radiusList]
+
+            radiusJudge = [i <= betaradius for i in radiusList]
             nb_group_len_new = len(nbGroup)
 
             if all(radiusJudge) or nb_group_len == nb_group_len_new:
