@@ -2,7 +2,7 @@ import numpy as np
 from NaturalBall.NaturalBallClustering_synthetic import get_radius, draw_ball, plot_dot, spilt_ball
 
 
-class NNSearch():
+class NNSearch:
 
     def __init__(self, A):
         self.A = A
@@ -62,26 +62,29 @@ class NNSearch():
 
         # 将只有数据下标的球转换为实际数据的球
         def fillData(nbGroup):
-            initialBall=[]
-            for key,value in nbGroup.items():
+            initialBall = []
+            for key, value in nbGroup.items():
                 ball = []
                 for v in value:
                     ball.extend([data[v, :]])
-                ball=np.array(ball)
+                ball = np.array(ball)
                 initialBall.extend([ball])
             return initialBall
 
-
         def splitNB(ball):
-            intersectDict={}
+            intersectDict = {}
             for b in ball:
-                intersectDict[b]=len(intersectionList[b])
-            sorted_intersect_dict=sorted(intersectDict.items(),key=lambda x:x[1])
+                intersectDict[b] = len(intersectionList[b])
+            sorted_intersect_dict = sorted(intersectDict.items(),key=lambda x:x[1])
             ballData = []
             for b in ball:
                 ballData.extend([data[b, :]])
+
             ballData = np.array(ballData)
-            originBall, newBall = spilt_ball(ballData, list(ball),sorted_intersect_dict[-1][0],sorted_intersect_dict[0][0])
+
+            originBall, newBall = spilt_ball(ballData, list(ball), sorted_intersect_dict[-1][0],
+                                             sorted_intersect_dict[0][0])
+
             return originBall, newBall
 
         # 得到初始球，填充数据计算半径
@@ -94,20 +97,24 @@ class NNSearch():
         for i, nb in enumerate(refinedBall):
             radiusList[i] = get_radius(nb)
         # 计算平均半径值时忽略半径值为0(单点球)的球，更符合逻辑，且避免死循环
+
         radiusAray = np.array(radiusList)
-        radiusMean = radiusAray[radiusAray.nonzero()].mean()
+        radiusMean = radiusAray.mean()
+        radiusStd = np.std(radiusAray)
+        radius = radiusMean + radiusStd
+
         while True:
+
         #######################################################
-            nb_group_len=len(nbGroup)
+            nb_group_len = len(nbGroup)
             for i in range(len(radiusList)):
-                if radiusList[i] >= radiusMean*2:
+                if radiusList[i] > radius:
                     # 更新group字典
-                    (originBall, newBall)=splitNB(nbGroup[i])
+                    (originBall, newBall) = splitNB(nbGroup[i])
                     nbGroup[i] = originBall
                     if len(newBall) > 0:
                         nbGroup[ballCount] = newBall
                         ballCount += 1
-
 
             # 更新数据
             refinedBall = fillData(nbGroup)
@@ -116,18 +123,17 @@ class NNSearch():
             radiusList = [0] * len(refinedBall)
             for i, nb in enumerate(refinedBall):
                 radiusList[i] = get_radius(nb)
-            radiusAray = np.array(radiusList)
-            radiusMean = radiusAray[radiusAray.nonzero()].mean()
             # 判断所有球是否小于半径两倍
-            radiusJudge = [i <= radiusMean*2 for i in radiusList]
+            radiusJudge = [i <= radius for i in radiusList]
             nb_group_len_new = len(nbGroup)
 
             if all(radiusJudge) or nb_group_len == nb_group_len_new:
                 break
+
         finallBall = refinedBall
         # 画出分裂后的球分布
-        plot_dot(data)
-        draw_ball(finallBall)
+        # plot_dot(data)
+        # draw_ball(finallBall)
 
         return nbGroup
 
