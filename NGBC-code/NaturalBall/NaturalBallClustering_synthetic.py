@@ -4,7 +4,7 @@ from scipy.spatial.distance import pdist, squareform
 
 
 class NaturalBall:
-    def __init__(self, data, label,dataIndex):
+    def __init__(self, data, label, dataIndex):
         self.data = data
         self.dataIndex = dataIndex
         self.center = self.data.mean(0)
@@ -18,7 +18,7 @@ class NaturalBall:
         return max(((self.data - self.center) ** 2).sum(axis=1) ** 0.5)
 
 
-def spilt_ball(data,index,dense,sparse):
+def spilt_ball(data, index, dense, sparse):
     ball1 = []
     ball2 = []
     A = pdist(data)
@@ -33,30 +33,10 @@ def spilt_ball(data,index,dense,sparse):
         else:
             ball2.append(index[j])
     # 返回数据下标
-    if(len(ball1) > len(ball2)):
+    if len(ball1) > len(ball2):
         return set(ball1), set(ball2)
     else:
         return set(ball2), set(ball1)
-
-
-def get_DM(hb):
-    num = len(hb)
-    center = hb.mean(0)
-    diffMat = np.tile(center, (num, 1)) - hb
-    sqDiffMat = diffMat ** 2
-    sqDistances = sqDiffMat.sum(axis=1)
-    distances = sqDistances ** 0.5
-    sum_radius = 0
-    radius = max(distances)
-    for i in distances:
-        sum_radius = sum_radius + i
-    mean_radius = sum_radius / num
-    dimension = len(hb[0])
-    if mean_radius != 0:
-        DM = num / (sum_radius)
-    else:
-        DM = num
-    return DM
 
 
 def get_radius(hb):
@@ -102,7 +82,10 @@ def nb_plot(gbs):
         22: '#b8d38f',
         23: '#e3a04f',
         24: '#edc02f',
-        25: '#ff8444', }
+        25: '#ff8444',
+        26: '#F0F8FF',
+        
+    }
 
     plt.figure(figsize=(10, 10))
     label_num = {}
@@ -113,6 +96,7 @@ def nb_plot(gbs):
     label = set()
     for key in label_num.keys():
         label.add(key)
+
     list = []
     for i in range(0, len(label)):
         list.append(label.pop())
@@ -124,9 +108,13 @@ def nb_plot(gbs):
 
     for key in gbs.keys():
         for i in range(0, len(list)):
-            if (gbs[key].label == list[i]):
-                plt.scatter(gbs[key].data[:, 0], gbs[key].data[:, 1], s=4, c=color[i], linewidths=5, alpha=0.9,
-                            marker='o')
+            if gbs[key].label == list[i]:
+                if i < 173:
+                    plt.scatter(gbs[key].data[:, 0], gbs[key].data[:, 1], s=4, c=color[i], linewidths=5, alpha=0.9,
+                                marker='o')
+                else:
+                    plt.scatter(gbs[key].data[:, 0], gbs[key].data[:, 1], s=4, c='blue', linewidths=5, alpha=0.9,
+                                marker='o')
     plt.show()
 
 
@@ -140,17 +128,17 @@ def draw_ball(hb_list):
             x = center[0] + radius * np.cos(theta)
             y = center[1] + radius * np.sin(theta)
             # 参数ls是球的线类型，‘-’指实线，lw表示线宽
-            plt.plot(x, y, ls="-", color="black", lw=0.7)
-
+            plt.plot(x, y, ls="-", color="black", lw=0.7, alpha=0.5)
     plt.show()
 
 
-def form_nb_cluster_by_neighbor(data,dis_index,nbGroup):
+def form_nb_cluster_by_neighbor(data, dis_index, nbGroup):
 
     # nbGroup里面的key是某个球，value是某个球里面的数据点
     connected_nb_cluster = nbGroup
 
     def merge_by_neighbor(connected_nb_cluster):
+
         connected_temp_nb_cluster = {}
         iterateList = [False] * len(connected_nb_cluster)
         clusterCount = 0
@@ -158,16 +146,20 @@ def form_nb_cluster_by_neighbor(data,dis_index,nbGroup):
             if not iterateList[i]:
                 connected_temp_nb_cluster.setdefault(clusterCount, connected_nb_cluster[i])
                 for j in range(i, len(iterateList)):
-                    # 把当前簇【i】去和没有被合并的球【j】进行merge判断，交集大于0进行合并，且把合并标记为True
-                    if len(connected_temp_nb_cluster[clusterCount] & connected_nb_cluster[j]) > 0 and not iterateList[j]:
-                        iterateList[j] = True
-                        connected_temp_nb_cluster[clusterCount] |= connected_nb_cluster[j]
+                    if (i >= len(data)) != (j >= len(data)):
+                        if len(connected_temp_nb_cluster[clusterCount] & connected_nb_cluster[j]) > 1 and not iterateList[j]:
+                            iterateList[j] = True
+                            connected_temp_nb_cluster[clusterCount] |= connected_nb_cluster[j]
+                    elif (i < len(data)) & (j < len(data)):
+                        if len(connected_temp_nb_cluster[clusterCount] & connected_nb_cluster[j]) > 0 and not iterateList[j]:
+                            iterateList[j] = True
+                            connected_temp_nb_cluster[clusterCount] |= connected_nb_cluster[j]
                 clusterCount += 1
         return connected_temp_nb_cluster
 
     potentialNoise = set()
 
-    #进行公共邻居的合并：只要两个球有公共点就进行合并
+    # 进行公共邻居的合并：只要两个球有公共点就进行合并
     while True:
         connected_temp_nb_cluster = merge_by_neighbor(connected_nb_cluster)
 
@@ -180,7 +172,7 @@ def form_nb_cluster_by_neighbor(data,dis_index,nbGroup):
             break
         connected_nb_cluster = connected_temp_nb_cluster
 
-    #分配潜在的噪声点到各个簇
+    # 分配潜在的噪声点到各个簇
     data_label_list = [-1]*len(data)
     all_cluster_data = set()
     for key, value in connected_nb_cluster.items():
@@ -192,17 +184,19 @@ def form_nb_cluster_by_neighbor(data,dis_index,nbGroup):
     potentialNoise |= (all_data_set-all_cluster_data)
 
     # copy一个已分配标签用于对照，避免数据点的分配问题
-    data_label_list_for_compare=data_label_list.copy()
+    data_label_list_for_compare = data_label_list.copy()
+
     # 对潜在的噪声数据点进行打标签，离哪个已经被打标的数据点最近，就打哪个标签的值
     for noise in potentialNoise:
 
-        #取出index在距离矩阵中最近的那个点的标签
+        # 取出index在距离矩阵中最近的那个点的标签
         for index in dis_index[noise][1]:
             if data_label_list_for_compare[index] != -1:
-                data_label_list[noise]=data_label_list_for_compare[index]
+                data_label_list[noise] = data_label_list_for_compare[index]
                 break
+
     # 把新打标的潜在噪声数据点分配到实际簇中
-    for i,label in enumerate(data_label_list):
+    for i, label in enumerate(data_label_list):
         connected_nb_cluster[label].add(i)
 
     # 根据数据的标签分配到最终实际的簇
@@ -210,11 +204,12 @@ def form_nb_cluster_by_neighbor(data,dis_index,nbGroup):
     labelCount = 0
     for value in connected_nb_cluster.values():
         nbData = []
-        for v in value:
-            nbData.append(data[v])
-        nbData=np.array(nbData)
-        nbCluster[labelCount]  =NaturalBall(nbData, labelCount, list(value))
-        labelCount += 1
+        if len(value) > 0:
+            for v in value:
+                nbData.append(data[v])
+            nbData = np.array(nbData)
+            nbCluster[labelCount] = NaturalBall(nbData, labelCount, list(value))
+            labelCount += 1
 
     return nbCluster
 
