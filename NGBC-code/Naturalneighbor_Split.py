@@ -96,7 +96,6 @@ class NNSearch:
         radiusList = [0] * len(refinedBall)
         for i, nb in enumerate(refinedBall):
             radiusList[i] = get_radius(nb)
-        # 计算平均半径值时忽略半径值为0(单点球)的球，更符合逻辑，且避免死循环
 
         radiusAray = np.array(radiusList)
         radiusMean = radiusAray.mean()
